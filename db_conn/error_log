@@ -1,0 +1,8 @@
+[05-Nov-2020 16:45:11 Asia/kolkata] PHP Fatal error:  Uncaught TypeError: htmlspecialchars() expects parameter 1 to be string, null given in /home/makemycareers/public_html/db_conn/libraries/classes/Table.php:1013
+Stack trace:
+#0 /home/makemycareers/public_html/db_conn/libraries/classes/Table.php(1013): htmlspecialchars(NULL)
+#1 /home/makemycareers/public_html/db_conn/libraries/classes/MultSubmits.php(339): PhpMyAdmin\Table::moveCopy('makemyca_mmc', 'super_admin', NULL, 'super_admin', 'structure', false, 'one_table')
+#2 /home/makemycareers/public_html/db_conn/libraries/mult_submits.inc.php(267): PhpMyAdmin\MultSubmits->buildOrExecuteQuery('copy_tbl', Array, 'makemyca_mmc', '', Array, NULL, NULL, NULL)
+#3 /home/makemycareers/public_html/db_conn/libraries/classes/Controllers/Database/StructureController.php(326): include('/home/makemycar...')
+#4 /home/makemycareers/public_html/db_conn/libraries/classes/Controllers/Database/StructureController.php(130): PhpMyAdmin\Controllers\Database\StructureController->multiSubmitAction()
+#5 /home/makemycareers/public_html/db_co in /home/makemycareers/public_html/db_conn/libraries/classes/Table.php on line 1013

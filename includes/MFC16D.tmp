@@ -1,0 +1,2276 @@
+<?php
+error_reporting(0);
+$ColDateAry=array("mem_date","mem_ldt","cart_date","cou_date","cou_start_date","cou_expiry_date","ba_date","mk_date","prod_date","ban_date","news_date","dl_contract_expiry_date","dl_ldt","mod_date","ba_start_date","ba_expiry_date");
+$ColStateAry=array();
+$ColCountryAry=array("");
+$ColGenderAry=array();
+$ColYNAry=array("cat_show_tab","cat_show_box");
+$ColNumberAry=array();
+$ColCurrencyAry=array("cart_total","ci_total","ci_price","cart_cou_amount","cart_grand_total","prod_price","cat_display_price");
+$ColCheckedAry=array();
+$ColFileSizeAry=array();
+##################################
+function get_banner_size($bl_id, $banner_count)
+{
+	
+  	gri("banner_location","WHERE bl_id='$bl_id'","",$bl);
+	$height=$bl[bl_height];
+	$width=$bl[bl_width];
+	$sep=0;
+	if($banner_count==2)
+	{
+	  //for half banner reduce 5px space for separator between two banners
+	  $sep=5;
+	}elseif($banner_count==3)
+	{
+	  //for quater banner reduce 10px space for separator between three banners
+	  $sep=10;
+	}
+	if($bl[bl_partition]=="horizontal")
+	{
+		$width=$width-$sep;
+		$width=floor($width/$banner_count);
+	}else{
+		$height=$height-$sep;
+		$height=floor($height/$banner_count);
+	}
+	$banner_size=array("width"=>$width,"height"=>$height,"pixel"=>$bl[bl_pixel],"bkey"=>$bl[bl_key]);
+	return $banner_size;
+}
+######################################
+function get_banner($table,$table_con,$thumb=1)
+{
+   $banner="";
+   if(gri($table,$table_con,"",$ba))
+   	{
+		if($ba[ba_type]=="1")
+		{
+			$banner_size=get_banner_size($ba[ba_bl_id], $ba[ba_group]);
+			if(get_upload_info($ba[ba_id],'banner',$ba[bl_key],0,$up_img)>0)
+			{
+				if($thumb==1)
+				{
+				  $banner="<img src=\"$up_img[up_view_path_thumb]\" border=\"0\" width=\"$banner_size[width]\" height=\"$banner_size[height]\">";	
+				 }else{
+				    $banner="<img src=\"$up_img[up_view_path]\" border=\"0\" width=\"$banner_size[width]\" height=\"$banner_size[height]\">";	
+				 }			
+			}
+			
+		}
+		elseif($ba[ba_type]=="0")
+		{
+			get_upload_info($ba[ba_id],'banner',$ba[bl_key],0,$up_flsah);
+			$banner='<object classid="clsid:D27CDB6E-AE6D-11cf-96B8-444553540000" codebase="http://download.macromedia.com/pub/shockwave/cabs/flash/swflash.cab#version=7,0,19,0"  width='.$ba[ba_flash_width].' height='.$ba[ba_flash_height].'>
+  <param name="movie" value="'.$up_flsah[up_view_path].'">
+  <param name="quality" value="high">
+  <embed src="'.$up_flsah[up_view_path].'" quality="high" pluginspage="http://www.macromedia.com/go/getflashplayer" type="application/x-shockwave-flash"  width='.$ba[ba_flash_width].' height='.$ba[ba_flash_height].'></embed>
+</object>';
+		}
+		elseif($ba[ba_text]!="")
+		{			
+				$banner=$ba[ba_text];
+		}
+		
+		if($ba[ba_url]!="")
+		{
+			$target="_blank";
+			if(strstr($ba[ba_url],"JavaScript"))
+			{
+				$target="";
+			}
+			$banner="<a href=\"$ba[ba_url]\" target=\"$target\">$banner</a>";
+		}	
+		$SQL="UPDATE banner SET ba_used=ba_used+1 WHERE ba_id='$ba[ba_id]'";
+		eq($SQL,$rs);
+		
+	}
+	return $banner;
+}
+###################################################
+function banner_management($ban_loc,$thumb=1)
+{
+	global $SVP;
+	$R=DIN_ALL($_REQUEST);
+	$dt=time();	
+	$banner="";
+	$con="";
+	if($R[dl_id]>0)
+	{
+	  $con.=" AND (ba_dl_id='$R[dl_id]' OR ba_dl_id='0')";
+	}
+	if($R[zipcode]>0)
+	{
+	  $con.=" AND (ba_zip_code='$R[zipcode]' OR ba_zip_code_all='1')";
+	}
+	if($R[make]>0)
+	{
+	  $con.=" AND (ba_mak_id='$R[make]' OR ba_make_all='1')";
+	}
+	$table="banner,banner_location";
+	$table_con="WHERE ba_bl_id=bl_id AND bl_key='$ban_loc' AND ba_active='1' AND ((ba_start_date<='$dt' AND ba_expiry_date>='$dt') || ba_expiry_date<=0) $con ORDER BY rand()";
+	
+	$banner=get_banner($table,$table_con,$thumb);
+	
+	return $banner;
+}
+
+##################################
+function set_make_product($mk_id=0)
+{
+	$con="";
+	$con1="";
+	if($mak_id>0)
+	{
+	  $con=" WHERE mk_id='$mk_id'";
+	}
+
+	$SQL="SELECT * FROM make $con";
+	eq($SQL,$rs);
+	while($data=mfa($rs))
+	{
+		$total=0;
+		$total=grc("product_make","WHERE pm_mk_id='$data[mk_id]'");
+		$SQL2="UPDATE make SET mk_parts_count='$total' WHERE mk_id='$data[mk_id]'";
+		eq($SQL2,$rs2);
+	}
+}
+#############################################
+function set_dealer_show($dl_id)
+{
+	$dt=time();
+	gri("dealer","WHERE dl_id='$dl_id'","dl_id, dl_type, dl_is_paid, dl_contract_date, dl_contract_expiry_date, dl_active",$dl);
+	//echo date("m/d/Y",$dt)." ".$dl[dl_contract_date]." ".($dl[dl_contract_date]<=$dt)." ".date("m/d/Y",$dl[dl_contract_expiry_date])." ".($dl[dl_contract_expiry_date]>$dt);
+	if($dl[dl_type]==0)
+	{
+		if($dl[dl_is_paid]==1 && $dl[dl_contract_date]<=$dt && $dl[dl_contract_expiry_date]>$dt && $dl[dl_active]==1)
+		{
+		 	 $SQL="UPDATE dealer SET
+		  		   dl_can_show='1'
+				   WHERE dl_id='$dl[dl_id]'";
+		  	 eq($SQL,$rs);
+		}else{
+			$SQL="UPDATE dealer SET
+		  		  dl_can_show='0'
+				  WHERE dl_id='$dl[dl_id]'";
+		 	 eq($SQL,$rs);
+		}
+	}else{
+		if($dl[dl_active]==1)
+		{
+		 	 $SQL="UPDATE dealer SET
+		  		   dl_can_show='1'
+				   WHERE dl_id='$dl[dl_id]'";
+		  	 eq($SQL,$rs);
+		}else{
+			$SQL="UPDATE dealer SET
+		  		  dl_can_show='0'
+				  WHERE dl_id='$dl[dl_id]'";
+		 	 eq($SQL,$rs);
+		}
+	}
+	$SQL="SELECT prod_id FROM product WHERE prod_dl_id='$dl[dl_id]'";
+	$tot=eq($SQL,$rs);
+	if($tot>0)
+	{
+		while($data=mfa($rs))
+		{
+			set_product_show($data[prod_id]);
+		}
+	}
+	
+}
+##################################
+function set_product_show($prod_id)
+{
+	$dt=time();
+	gri("product,dealer","WHERE prod_dl_id=dl_id AND prod_id='$prod_id'","prod_id, prod_active, dl_type, dl_is_paid, dl_contract_date, dl_contract_expiry_date, dl_active",$prod);
+	if($prod[dl_type]==1)
+	{
+		/*if($prod[prod_is_paid]==1 && $prod[prod_expiry_date]>$dt && $prod[prod_active]==1)
+		{
+		 	 $SQL="UPDATE product SET
+		  		   prod_can_show='1'
+				   WHERE prod_id='$prod[prod_id]'";
+		  	 eq($SQL,$rs);
+		}else{
+			$SQL="UPDATE product SET
+		  		  prod_can_show='0'
+				  WHERE prod_id='$prod[prod_id]'";
+		 	 eq($SQL,$rs);
+		}*/
+	}else{
+		if($prod[dl_is_paid]==1 && $prod[dl_contract_date]<=$dt && $prod[dl_contract_expiry_date]>$dt && $prod[dl_active]==1 && $prod[prod_active]==1)
+		{
+		 	 $SQL="UPDATE product SET
+		  		   prod_can_show='1'
+				   WHERE prod_id='$prod[prod_id]'";
+		  	 eq($SQL,$rs);
+		}else{
+			$SQL="UPDATE product SET
+		  		  prod_can_show='0'
+				  WHERE prod_id='$prod[prod_id]'";
+		 	 eq($SQL,$rs);
+		}
+	}
+}
+####################################
+
+function get_subcat_matrix($ary)
+{
+	if(sizeof($ary)==0)
+	{
+		return "";
+	}
+	
+	global $SVP;
+	$m=0;
+	$cols=5;
+	$cols_=$cols-1;
+	$t=new Template("templates");
+	$t->set_file("MyFileHandle","subcat_matrix.htm");
+	$t->set_block('MyFileHandle', 'AccessBlockCategoryMatrixList', 'ABlockList');
+
+	$i=0;
+	
+	foreach($ary as $k=>$v)
+	{
+		$t->set_var(array("cat_matrix_".$i%$cols=>get_subcat_source($v),"m_".$m%$cols=>$m));
+		if($v>0)
+		{	$style_txt="";
+			$class_txt="catbox";
+			if(get_upload_info($v,"category","",0,$up)>0)
+			{
+				$style_txt.="style=\"background:url(".$up[up_view_path_thumb].") no-repeat right bottom;\"";
+			}
+			$t->set_var(array("show_".$m=>$style_txt,"class_".$m=>$class_txt,
+							  "cbox_".$m=>'background:url(images/top_box_bg.png) no-repeat;',
+								));
+		}
+		 
+		if($i%$cols==$cols_ AND $i>0)
+		{
+			$t->Parse('ABlockList', 'AccessBlockCategoryMatrixList', true);		
+		}
+		$i++;
+		$m++;
+		
+	}
+	$n=$i;
+	if($i>0 AND $i%$cols!=$cols)
+	{
+		$cat_class="";
+		
+		for($j=$i;$i>0;$j++)
+		{
+			$t->set_var(array("cat_matrix_".$j%$cols=>"","m_".$m%$cols=>$m,));
+			if($j%$cols==$cols_)
+			{
+				$t->set_var(array("show_".$m=>"",));
+				$t->Parse('ABlockList', 'AccessBlockCategoryMatrixList', true);	
+				$i=0;
+			}
+			$m++;
+		}
+	}
+	//hide unused columns in a row
+	if($n%$cols>0 && $n%$cols<$cols)
+	{		
+		for($k=$n;$k<$m;$k++)
+		{			
+			$t->set_var(array("show_".$k=>"","class_".$k=>"",));
+		}
+		
+	}
+	$t->set_var(array(	"title"=>$title,
+						"SVP"=>$SVP,
+						));
+	$t->parse("MyOutPut","MyFileHandle");
+	return $t->get("MyOutPut");
+}
+#####################################
+
+function get_subcat_source($cat_id)
+{
+	global $SVP;
+	$t=new Template("templates");
+	$t->set_file("MyFileHandle","subcat_source.htm");
+	gri("category","WHERE cat_id='$cat_id' AND cat_active='1'","",$cat);
+	$cat[cat_title]=short_txt($cat[cat_title],40);
+	foreach($cat as $k=>$v)
+	{
+	  $t->set_var(array("$k"=>$v,));
+	}
+	$SQL="SELECT cat_id,cat_title FROM category WHERE cat_active='1' AND cat_p_cat_id='$cat[cat_id]' ORDER BY rand() ASC LIMIT 0,4";
+	eq($SQL,$rs);
+	
+	$t->set_block('MyFileHandle', 'AccessBlockSubCategoryList', 'ABlockList');
+	while($data=mfa($rs))
+	{
+		foreach($data as $k=>$v)
+		{
+		  $t->set_var(array("sub_$k"=>$v,));
+		}
+	  $t->Parse('ABlockList', 'AccessBlockSubCategoryList', true);	
+	}
+	$t->set_var(array("SVP"=>$SVP,));
+
+	$t->parse("MyOutPut","MyFileHandle");
+	return $t->get("MyOutPut");
+}
+
+##################################
+
+function get_dealer_subcat_matrix($ary)
+{
+	if(sizeof($ary)==0)
+	{
+		return "";
+	}
+	global $SVP;
+	$cols=5;
+	$cols_=$cols-1;
+	$t=new Template("templates");
+	$t->set_file("MyFileHandle","dealer_subcat_matrix.htm");
+	$t->set_block('MyFileHandle', 'AccessBlockCategoryMatrixList', 'ABlockList');
+
+	$i=0;
+	foreach($ary as $k=>$v)
+	{
+		$t->set_var(array("cat_matrix_".$i%$cols=>get_dealer_subcat_source($v),));
+		$up=array();
+		if(get_upload_info($v,"category","",0,$up)>0)
+		{
+		  	foreach($up as $k=>$v)
+			{
+			  $t->set_var(array("$k"=>$v,));
+			}
+		}
+		
+		
+		if($i%$cols==$cols_ AND $i>0)
+		{
+			$t->Parse('ABlockList', 'AccessBlockCategoryMatrixList', true);		
+		}
+		$i++;
+	}
+
+	if($i>0 AND $i%$cols!=$cols)
+	{
+		for($j=$i;$i>0;$j++)
+		{
+			$t->set_var(array("cat_matrix_".$j%$cols=>"",));
+			if($j%$cols==$cols_)
+			{
+				$t->Parse('ABlockList', 'AccessBlockCategoryMatrixList', true);	
+				$i=0;
+			}
+		}
+	}
+
+	$t->set_var(array("title"=>$title,
+					  "SVP"=>$SVP,
+						));
+	$t->parse("MyOutPut","MyFileHandle");
+	return $t->get("MyOutPut");
+}
+#####################################
+
+function get_dealer_subcat_source($da_cat_id)
+{
+	$R=DIN_ALL($_REQUEST);
+	global $SVP;
+	$t=new Template("templates");
+	$t->set_file("MyFileHandle","dealer_subcat_source.htm");
+	gri("category","WHERE cat_id='$da_cat_id' AND cat_active='1'","",$cat);
+	foreach($cat as $k=>$v)
+	{
+	  $t->set_var(array("$k"=>$v,));
+	}
+	$SQL="SELECT cat_id,cat_title FROM category WHERE cat_active='1' AND cat_p_cat_id='$cat[cat_id]' ORDER BY rand() ASC LIMIT 0,4";
+	eq($SQL,$rs);
+	$t->set_block('MyFileHandle', 'AccessBlockSubCategoryList', 'ABlockList');
+	while($data=mfa($rs))
+	{
+		$data[dl_id]=$R[dl_id];
+		foreach($data as $k=>$v)
+		{
+		  $t->set_var(array("sub_$k"=>$v,));
+		}
+	  $t->Parse('ABlockList', 'AccessBlockSubCategoryList', true);	
+	}
+	$t->set_var(array("SVP"=>$SVP,));
+
+	$t->parse("MyOutPut","MyFileHandle");
+	return $t->get("MyOutPut");
+}
+
+##################################
+function get_category_matrix($ary)
+{
+	if(sizeof($ary)==0)
+	{
+		return "";
+	}
+
+	global $SVP;
+	$cols=4;
+	$cols_=$cols-1;
+	$t=new Template("templates");
+	$t->set_file("MyFileHandle","category_matrix.htm");
+	$t->set_block('MyFileHandle', 'AccessBlockCategoryMatrixList', 'ABlockList');
+
+	$i=0;
+	foreach($ary as $k=>$v)
+	{
+		$m=$i%$cols;
+			$t->set_var(array("cat_matrix_".$i%$cols=>get_category_source($v),
+							  "cbox_".$m=>'background:url(images/top_box_bg.png) no-repeat;',
+							 ));
+							  						  
+		if($i%$cols==$cols_ AND $i>0)
+		{
+			$t->Parse('ABlockList', 'AccessBlockCategoryMatrixList', true);		
+		}
+		$i++;
+	}
+	if($i>0 AND $i%$cols!=0)
+	{
+		for($j=$i;$i>0;$j++)
+		{
+			$k=$j%$cols;
+			$t->set_var(array("cat_matrix_".$j%$cols=>"",
+							  "cbox_".$k=>"style='display:none'",
+							  ));
+			if($j%$cols==$cols_)
+			{
+				$t->Parse('ABlockList', 'AccessBlockCategoryMatrixList', true);	
+				$i=0;
+			}
+		}
+	}
+	$t->set_var(array("title"=>$title,
+					  "SVP"=>$SVP,
+						));
+	$t->parse("MyOutPut","MyFileHandle");
+	return $t->get("MyOutPut");
+}
+#####################################
+
+function get_category_source($cat_id)
+{
+	global $SVP;
+	$t=new Template("templates");
+	$t->set_file("MyFileHandle","category_source.htm");
+	gri("category","WHERE cat_id='$cat_id' AND cat_active='1'","",$cat);
+	$cat[cat_title]=short_txt($cat[cat_title],40);
+	$cat[CPT1]="<!--";	$cat[CPT2]="-->";
+	$cat[CDT1]="<!--";	$cat[CDT2]="-->";
+	$cat[CDT3]="";	$cat[CDT4]="";
+	if($cat[cat_chk_display_price]==1 && $cat[cat_display_price]!="")
+	{
+		$cat[CPT1]="";	$cat[CPT2]="";
+	}
+	if($cat[cat_chk_display_text]==1 && $cat[cat_display_text]!="")
+	{
+		$cat[CDT1]="";	$cat[CDT2]="";
+	}
+	if($cat[CPT1]=="<!--" && $cat[CDT1]=="<!--")
+	{
+		$cat[CDT3]="<!--";	$cat[CDT4]="-->";
+	}
+	if(get_upload_info($cat[cat_id],"category","",0,$up)>0)
+	{
+	  $cat=array_merge($cat,$up);
+	}
+	foreach($cat as $k=>$v)
+	{
+	  $t->set_var(array("$k"=>$v,));
+	}
+	$SQL="SELECT cat_id,cat_title FROM category WHERE cat_active='1' AND cat_p_cat_id='$cat[cat_id]' ORDER BY rand() ASC LIMIT 0,3";
+	eq($SQL,$rs);
+	$t->set_block('MyFileHandle', 'AccessBlockCategoryMatrixList', 'ABlockList');
+	while($data=mfa($rs))
+	{
+		$data[cat_title]=short_txt($data[cat_title],50);
+		foreach($data as $k=>$v)
+		{
+		  $t->set_var(array("sub_$k"=>$v,));
+		}
+	  $t->Parse('ABlockList', 'AccessBlockCategoryMatrixList', true);	
+	}
+	$t->set_var(array("SVP"=>$SVP,));
+
+	$t->parse("MyOutPut","MyFileHandle");
+	return $t->get("MyOutPut");
+}
+#####################################
+##################################
+function get_sec_category_matrix($ary)
+{
+	if(sizeof($ary)==0)
+	{
+		return "";
+	}
+
+	global $SVP;
+	$cols=2;
+	$cols_=$cols-1;
+	$t=new Template("templates");
+	$t->set_file("MyFileHandle","sec_category_matrix.htm");
+	$t->set_block('MyFileHandle', 'AccessBlockCategoryMatrixList', 'ABlockList');
+
+	$i=0;
+	foreach($ary as $k=>$v)
+	{
+		$m=$i%$cols;
+			$t->set_var(array("cat_matrix_".$i%$cols=>get_sec_category_source($v),
+							  "cbox_".$m=>'background:url(images/top_box_bg.png) no-repeat;',
+							  ));
+							  						  
+		if($i%$cols==$cols_ AND $i>0)
+		{
+			$t->Parse('ABlockList', 'AccessBlockCategoryMatrixList', true);		
+		}
+		$i++;
+	}
+	if($i>0 AND $i%$cols!=0)
+	{
+		for($j=$i;$i>0;$j++)
+		{
+			$k=$j%$cols;
+			$t->set_var(array("cat_matrix_".$j%$cols=>"",
+							  "cbox_".$k=>"style='display:none'",
+							  ));
+			if($j%$cols==$cols_)
+			{
+				$t->Parse('ABlockList', 'AccessBlockCategoryMatrixList', true);	
+				$i=0;
+			}
+		}
+	}
+	$t->set_var(array("title"=>$title,
+					  "SVP"=>$SVP,
+						));
+	$t->parse("MyOutPut","MyFileHandle");
+	return $t->get("MyOutPut");
+}
+########################################
+function get_sec_category_source($cat_id)
+{
+	global $SVP;
+	$t=new Template("templates");
+	$t->set_file("MyFileHandle","sec_category_source.htm");
+	gri("category","WHERE cat_id='$cat_id' AND cat_active='1'","",$cat);
+	$cat[cat_title]=short_txt($cat[cat_title],40);
+	$cat[cat_desc]=short_txt($cat[cat_desc],310);
+	foreach($cat as $k=>$v)
+	{
+	  $t->set_var(array("$k"=>$v,));
+	}
+	$t->set_var(array("SVP"=>$SVP,));
+
+	$t->parse("MyOutPut","MyFileHandle");
+	return $t->get("MyOutPut");
+}
+
+##################################
+function get_banner_matrix($ary)
+{
+	if(sizeof($ary)==0)
+	{
+		return "";
+	}
+	global $SVP;
+	$cols=4;
+	$cols_=$cols-1;
+	$t=new Template("templates");
+	$t->set_file("MyFileHandle","banner_matrix.htm");
+	$t->set_block('MyFileHandle', 'AccessBlockTopBannerMatrixList', 'ABlockList');
+	$i=0;
+	foreach($ary as $k=>$v)
+	{	
+		$m=$i%$cols;
+	
+		$t->set_var(array("banner_matrix_".$i%$cols=>get_banner_source($v),
+						  "box_".$m."_1"=>'<img src="images/top_box/top_left.jpg" width="26" height="24"/>',
+						  "box_".$m."_2"=>'style="background:url(images/top_box/top_bg.jpg) repeat-x"',
+						  "box_".$m."_3"=>'<img src="images/top_box/top_right.jpg" width="26" height="24"/>',
+						  "box_".$m."_4"=>'style="background:url(images/top_box/left_line_bg.jpg) repeat-y"',
+						  "box_".$m."_5"=>'<img src="images/top_box/left_line.jpg" width="26" height="94"/>',
+						  "box_".$m."_6"=>'style="background:url(images/top_box/bg.jpg) repeat-x"',
+						  "box_".$m."_7"=>'style="background:url(images/top_box/right_line_bg.jpg) repeat-y"',
+						  "box_".$m."_8"=>'<img src="images/top_box/right_line.jpg" width="26" height="94"/>',
+						  "box_".$m."_9"=>'<img src="images/top_box/bottom_left.jpg" width="26" height="26"/>',
+						  "box_".$m."_10"=>'style="background:url(images/top_box/bottom_bg.jpg) repeat-x"',
+						  "box_".$m."_11"=>'<img src="images/top_box/bottom_right.jpg" width="26" height="26"/>',
+					));
+		if($i%$cols==$cols_ AND $i>0)
+		{
+			
+			$t->Parse('ABlockList', 'AccessBlockTopBannerMatrixList', true);		
+		}
+		$i++;
+	}
+	if($i>0 AND $i%$cols!=0)
+	{
+		for($j=$i;$i>0;$j++)
+		{	
+			$k=$j%$cols;
+			$t->set_var(array("banner_matrix_".$j%$cols=>"",
+							  "box_".$k."_1"=>"",
+							  "box_".$k."_2"=>"",
+							  "box_".$k."_3"=>"",
+							  "box_".$k."_4"=>"",
+							  "box_".$k."_5"=>"",
+							  "box_".$k."_6"=>"",
+							  "box_".$k."_7"=>"",
+							  "box_".$k."_8"=>"",
+							  "box_".$k."_9"=>"",
+							  "box_".$k."_10"=>"",
+							  "box_".$k."_11"=>"",
+							  ));
+			if($j%$cols==$cols_)
+			{
+				$t->Parse('ABlockList', 'AccessBlockTopBannerMatrixList', true);	
+				$i=0;
+			}
+		}
+	}
+	
+	$t->set_var(array("title"=>$title,
+					  "SVP"=>$SVP,
+						));
+	$t->parse("MyOutPut","MyFileHandle");
+	return $t->get("MyOutPut");
+}
+#####################################
+
+function get_banner_source($ban_id)
+{
+	global $SVP;
+	$t=new Template("templates");
+	$t->set_file("MyFileHandle","banner_source.htm");
+	if(gri("banner","WHERE ban_id='$ban_id'  AND ban_active='1'","",$banner))
+	{
+		foreach($banner as $k=>$v)
+		{
+			$t->set_var(array("$k"=>$v));
+		}
+	}
+
+	$t->set_var(array("SVP"=>$SVP,));
+
+	$t->parse("MyOutPut","MyFileHandle");
+	return $t->get("MyOutPut");
+}
+#######################################
+function get_make_matrix($ary)
+{
+	if(sizeof($ary)==0)
+	{
+		return "";
+	}
+
+	global $SVP;
+	$cols=4;
+	$cols_=$cols-1;
+	$t=new Template("templates");
+	$t->set_file("MyFileHandle","make_matrix.htm");
+	$t->set_block('MyFileHandle', 'AccessBlockMakeMatrixList', 'ABlockList');
+
+	$i=0;
+	foreach($ary as $k=>$v)
+	{
+		$t->set_var(array("make_matrix_".$i%$cols=>get_make_source($v),));
+		if($i%$cols==$cols_ AND $i>0)
+		{
+			$t->Parse('ABlockList', 'AccessBlockMakeMatrixList', true);		
+		}
+		$i++;
+	}
+	if($i>0 AND $i%$cols!=$cols && count($ary)%$cols!=0)
+	{
+		for($j=$i;$i>0;$j++)
+		{
+			$t->set_var(array("make_matrix_".$j%$cols=>"",));
+			if($j%$cols==$cols_)
+			{
+				$t->Parse('ABlockList', 'AccessBlockMakeMatrixList', true);	
+				$i=0;
+			}
+		}
+	}
+
+	$t->set_var(array("title"=>$title,
+					  "SVP"=>$SVP,
+						));
+	$t->parse("MyOutPut","MyFileHandle");
+	return $t->get("MyOutPut");
+}
+#####################################
+
+function get_make_source($mk_id)
+{
+	global $SVP;
+	$t=new Template("templates");
+	$t->set_file("MyFileHandle","make_source.htm");
+	if(gri("make","WHERE mk_id='$mk_id'  AND mk_active='1'","",$make))
+	{
+		foreach($make as $k=>$v)
+		{
+			$t->set_var(array("$k"=>$v));
+		}
+	}
+
+	$t->set_var(array("SVP"=>$SVP,));
+
+	$t->parse("MyOutPut","MyFileHandle");
+	return $t->get("MyOutPut");
+}
+
+####################################
+
+function get_privilege_matrix($ary,$sa_id="")
+{
+	if(sizeof($ary)==0)
+	{
+		return "";
+	}
+	
+	global $SVP;
+	$m=0;
+	$cols=4;
+	$cols_=$cols-1;
+	$t=new Template("templates");
+	$t->set_file("MyFileHandle","privilege_matrix.htm");
+	$t->set_block('MyFileHandle', 'AccessBlockCategoryMatrixList', 'ABlockList');
+
+	$i=0;
+	
+	foreach($ary as $k=>$v)
+	{
+		$t->set_var(array("cat_matrix_".$i%$cols=>get_privilege_source($v,$sa_id),"m_".$m%$cols=>$m));
+		if($v>0)
+		{	$style_txt="";
+			$class_txt="catbox";
+			if(get_upload_info($v,"category","",0,$up)>0)
+			{
+				$style_txt.="style=\"background:url(".$up[up_view_path_thumb].") no-repeat right bottom;\"";
+			}
+			$t->set_var(array("show_".$m=>$style_txt,"class_".$m=>$class_txt,));
+		}
+		 
+		if($i%$cols==$cols_ AND $i>0)
+		{
+			$t->Parse('ABlockList', 'AccessBlockCategoryMatrixList', true);		
+		}
+		$i++;
+		$m++;
+		
+	}
+	$n=$i;
+	if($i>0 AND $i%$cols!=$cols)
+	{
+		$cat_class="";
+		
+		for($j=$i;$i>0;$j++)
+		{
+			$t->set_var(array("cat_matrix_".$j%$cols=>"","m_".$m%$cols=>$m,));
+			if($j%$cols==$cols_)
+			{
+				$t->set_var(array("show_".$m=>"",));
+				$t->Parse('ABlockList', 'AccessBlockCategoryMatrixList', true);	
+				$i=0;
+			}
+			$m++;
+		}
+	}
+	//hide unused columns in a row
+	if($n%$cols>0 && $n%$cols<$cols)
+	{		
+		for($k=$n;$k<$m;$k++)
+		{			
+			$t->set_var(array("show_".$k=>"","class_".$k=>"",));
+		}
+		
+	}
+	$t->set_var(array(	"title"=>$title,
+						"SVP"=>$SVP,
+						));
+	$t->parse("MyOutPut","MyFileHandle");
+	return $t->get("MyOutPut");
+}
+#####################################
+
+function get_privilege_source($pc_id,$sa_id)
+{
+	global $SVP;
+	$t=new Template("templates");
+	$t->set_file("MyFileHandle","privilege_source.htm");
+	gri("privilege_category","WHERE pc_id='$pc_id' AND pc_active='1'","",$pvg);
+
+	foreach($pvg as $k=>$v)
+	{
+	  $t->set_var(array("$k"=>$v,));
+	}
+	$SQL="SELECT pc_id,pc_name FROM privilege_category WHERE pc_active='1' AND pc_p_id='$pvg[pc_id]' ORDER BY pc_name ASC";
+	eq($SQL,$rs);
+	$t->set_block('MyFileHandle', 'AccessBlockSubCategoryList', 'ABlockList');
+	while($inv=mfa($rs))
+	{
+		$chk="";
+		if(grc("sub_admin_privilege","WHERE sap_pc_id='$inv[pc_id]' AND sap_sa_id='$sa_id'")>0)
+		{
+		  $chk="checked";
+		}
+		foreach($inv as $k=>$v)
+		{
+		  $t->set_var(array("sub_$k"=>$v,));
+		}
+		$t->set_var(array("chk_$inv[pc_id]"=>$chk,));
+	  $t->Parse('ABlockList', 'AccessBlockSubCategoryList', true);	
+	}
+	$t->set_var(array("SVP"=>$SVP,));
+	$t->parse("MyOutPut","MyFileHandle");
+	return $t->get("MyOutPut");
+}
+#########################################
+
+function format_file_size($size=0)
+{
+	$up_size=round($size,2)."KB";
+	if($size>=1024)
+	{
+	    $up_size=round(($size/1024),2)."MB";
+	}
+	return $up_size;
+}
+#####################################################
+function make_htaccess($v)
+{
+	$v=strtolower($v);
+	$v_="";
+	$allow=array("a","b","c","d","e","f","g","h","i","j","k","l","m","n","o","p","q","r","s","t","u","v","w","x","y","z","0","1","2","3","4","5","6","7","8","9");
+	for($i=0;$i<strlen($v);$i++)
+	{
+		if(!in_array($v[$i],$allow))
+		{
+			$v_.="-";
+		}
+		else
+		{
+			$v_.=$v[$i];
+		}
+	}
+	return $v_;
+}
+####################################
+function gsa(&$sa)
+{
+	return gri("site_admin","","",$sa,0);
+}
+#####################################
+#will add passed in prefix to arra keys
+function array_prefix($ary,$prefix)
+{
+    $ary_new=array();
+    if(is_array($ary))
+    {
+	foreach($ary as $k=>$v)
+	{
+	    $ary_new[$prefix.$k]=$v;
+	}
+    }
+    return $ary_new;
+}
+##################################
+#gets the images page and returns the image tag with resized image size
+function resize_photo($image,&$img_w,&$img_h,$img_dw=100)
+{
+    global $ViewPath;
+    global $UploadPath;
+    $img_thumb1=$UploadPath.$image;
+    $img_thumb=$UploadPath.$image;
+    if(!file_exists($img_thumb1)){ print "a";$img_w=100; $img_h=100;return;}
+    $i=getimagesize($img_thumb);
+    #checking if original width of image is less than desired width the not resizing photo
+    if($img_dw>$i[0])
+    {
+	$img_w=$i[0];
+	$img_h=$i[1];
+	return;
+    }
+    
+    $img_w=$img_dw;
+
+    $img_h =  ($img_w/$i[0]) * $i[1];
+}
+###############################################
+function DOUT($str)
+{
+    return nl2br(stripslashes($str));
+}
+###############################################
+#makes the string ready to display
+function DOUT_ALL($ary)
+{
+    if($ary)
+    {
+	foreach($ary as $k=>$v)
+	{
+	    $ary[$k]=DOUT($v);
+	}
+    }
+    return $ary;
+}
+#####################################################
+#returns the small name for the passed in full name of country (USA for United States of America & IN for INDIA
+function get_country_small_name($cl_name)
+{
+    $cname=$cl_name;
+    $cl_name=trim($cl_name);
+    $ary=array();
+    $ary=explode(" ",$cl_name);
+    if(sizeof($ary)==1)
+    {//space not found in cl_name means country name is like India or Pakistan
+	$cname= ucfirst(substr($cl_name,0,5)).".";
+    }
+    else
+    {
+	$cname="";
+	
+    
+	foreach($ary as $a)
+	{
+	    if(strlen($a)<=2){continue;}
+	    $cname.=strtoupper(substr($a,0,1)).".";
+	}
+    }
+    return $cname;
+}
+#####################################################
+function make_round($num)
+{
+    return number_format($num,2);
+}
+##################################
+function format_short_date($tm,&$sdt)
+{
+    if($tm<=0)
+    {
+	$sdt= "--";
+	return;
+    }
+    $tm=getdate($tm);
+    $sdt="$tm[mon]/$tm[mday]/$tm[year]";
+    return $sdt;
+}
+#############################
+#returns the file size
+function get_file_size($up_id,&$up_size)
+{//$up_size = formatted upload size (including MB or KB etc)
+    global $UploadPath;
+    gri("uploads","WHERE up_id='$up_id'","",$up,0);
+    $fn=$UploadPath.$up[up_fname].$up[up_ext];
+    $up_size=0;
+    $size=0;
+    if(file_exists($fn))
+    {
+	$size=(filesize($fn)/1000);
+	$up_size=round($size,2)."K";
+	if($size>1024)
+	{
+	    $up_size=round(($size/1024),2)."M";
+	}
+    }
+    return $size;
+}
+############################
+/*function get_category_list($cc_id,)
+{
+	$SQL="";
+}*/
+##################################
+#returns the info of passed in upload id
+function get_upload_info($s_id,$s_type,$ss_type,$pos=0,&$up)
+{
+    global $UploadPath;
+    global $ViewPath;
+    $SQL = "SELECT * FROM uploads where up_s_id='$s_id' and up_s_type='$s_type' and up_s_sub_type='$ss_type' LIMIT $pos,1";
+    eq($SQL,$rs);
+    if(nr($rs)==0 and $show_err==1)
+    {
+        kill("Invalid s_id#$s_id and s_type#$s_type");
+    }
+    $up=mfa($rs);
+    $up[up_view_path]=$ViewPath.$up[up_fname].$up[up_ext];
+    $up[up_upload_path]=$UploadPath.$up[up_fname].$up[up_ext];
+    $up[up_view_path_thumb]=$ViewPath.$up[up_fname]."_thumb".$up[up_ext];
+    $up[up_upload_path_thumb]=$UploadPath.$up[up_fname]."_thumb".$up[up_ext];
+    if(nr($rs)==0)
+    {
+		$up[up_view_path]=$ViewPath."clear.gif";
+		$up[up_view_path_thumb]=$ViewPath."clear.gif";
+	
+		if($s_type=="learner" || $s_type=="tutor")
+		{
+			$up[up_view_path]=$ViewPath."avatar.jpg";
+			$up[up_view_path_thumb]=$ViewPath."avatar_thumb.jpg";
+		}
+    }
+    get_file_size($up[up_id],$up[up_size]);
+    return nr($rs);
+}
+#################################
+#creates thumb
+function create_thumb($up_id,$width=100,$prefix="_thumb")
+{
+  
+    global $UploadPath;
+    global $ViewPath;
+    $upload_dir=$UploadPath;
+	$quality=100;
+    gri("uploads","WHERE up_id='$up_id'","",$up,1);
+    $imgname=$upload_dir.$up[up_fname].$up[up_ext];
+	$img_thumb=$upload_dir.$up[up_fname].$prefix.$up[up_ext];
+	// get source image size (width/height/type)
+    // orig_img_type 1 = GIF, 2 = JPG, 3 = PNG
+    list($orig_w, $orig_h, $orig_img_type, $img_sizes) = @getimagesize($imgname);
+  
+	
+	 // ImageGIF is not included into some GD2 releases, so it might not work
+    // output png if gifs are not supported
+	if(($orig_img_type == 1)  && !function_exists('imagegif')) $orig_img_type = 3;
+	
+	 switch ($orig_img_type) {
+     case 1:
+       $orig_img = imagecreatefromgif($imgname);
+       break;
+     case 2:
+       $orig_img = imagecreatefromjpeg($imgname);
+       break;
+     case 3:
+       $orig_img = imagecreatefrompng($imgname);
+       break;
+    }
+	
+    $out_w = 100;
+    if($width>0)
+	{
+		$out_w=$width;
+	}
+    if($orig_w<$out_w)
+    {
+    	$out_w=$orig_w;
+    }
+	//echo $up_id." ".$out_w." ".$orig_w." ".$orig_h;
+    $out_h =  round(($out_w/$orig_w) * $orig_h,0);
+	//echo $out_w." ".$out_h." ".$orig_w." ".$orig_h;
+	
+	if ($orig_img_type == 1) {
+      // should use this function for gifs (gifs are palette images)
+      $img_out = imagecreate($out_w,$out_h);
+    }
+    else {
+      // Create a new true color image
+      $img_out = imagecreatetruecolor($out_w,$out_h);
+    }
+	 // Fill image with white background (255,255,255)
+    $white = imagecolorallocate($img_out, 255, 255, 255);
+    imagefilledrectangle( $img_out, 0, 0, $out_w, $out_h, $white);
+	
+	if (!$img_out) { /* See if it failed */		
+		imagestring ($img_out, 1, 5, 5, "Error loading $imgname", $tc); 
+	}
+
+	
+    // Copy the palette from one image to another
+   imagepalettecopy($img_out,$orig_img);
+    // Copy and resize part of an image with resampling
+   // imagecopyresampled( $im, $img_out, 0, 0, 0, 0, $out_w, $out_h, $orig_w, $orig_h);  
+   imagecopyresized($img_out,$orig_img,0,0,0,0, $out_w, $out_h, $orig_w, $orig_h);  
+    // destination, source// dstX, dstY, srcX, srcY // dstW, dstH// srcW, srcH    
+
+    switch ($orig_img_type) {
+      case 1:
+          $res = imagegif($img_out,$img_thumb);
+      case 2:
+          $res = imagejpeg($img_out,$img_thumb,$quality);
+        break;
+      case 3:
+        if (PHP_VERSION >= '5.1.2') {
+          // Convert to PNG quality.
+          // PNG quality: 0 (best quality, bigger file) to 9 (worst quality, smaller file)
+          $quality = 9 - min( round($quality / 10), 9 );
+          $res = imagepng($img_out, $img_thumb, $quality);
+        }
+        else {
+          $res = imagejpeg($img_out,$img_thumb,$quality);
+        } 
+	}
+   
+}
+########################################
+#uploads the specified file
+function upload_file($upld_name,$sid,$stype,$sstype,$allow_multiple=0,&$msg)
+{
+    global $UploadPath;
+    $_SESSION[err]="";
+     $ext=strtolower(substr($_FILES[$upld_name]['name'],strlen($_FILES[$upld_name]['name'])-4));
+    if($stype=="pg")
+    {//if uploading file is a photo than we have to put some speical checks like upload size limit and file format
+    	gri("site_admin","","",$sa,0);
+    	$size=$_FILES[$upld_name][size];
+    	if($size/1024>$sa[sa_max_upload_file_size])
+    	{
+    		$msg="Photo size must be less than <b>$sa[sa_max_upload_file_size_]</b>";
+    		return -1;
+    	}
+    	
+    	 if($ext=="jpeg"){$ext=".".$ext;}
+        if ($ext!=".jpg" AND $ext!=".jpeg")
+        {
+            $msg="Unsupported File Type <b>$ext</b> File Name : <b>".$_FILES[$upld_name]['name']."</b>";
+            return -1;
+        }
+    }
+    if (strlen($_FILES[$upld_name]['name'])>0)
+    {
+        if($allow_multiple==0)
+        {
+            $SQL = "SELECT  * FROM uploads WHERE up_s_id='$sid' AND up_s_type='$stype' AND up_s_sub_type='$sstype'";
+            eq($SQL,$rs);
+            while($data=mfa($rs))
+            {
+                delete_upload($data[up_id],$msg);
+            }
+        }
+       
+        $nm1=rand();    
+        $nm = $nm1.$ext;
+        $onm=$_FILES[$upld_name]['name'];
+    
+        if (!(move_uploaded_file($_FILES[$upld_name]['tmp_name'], $UploadPath.$nm))) 
+        {
+            print "Possible file upload attack! Here's some debugging info:\n"; print_r($_FILES);
+        }
+        #now saving img in db
+		$dt=time();
+        $SQL = "INSERT INTO uploads(up_s_id,up_s_type,up_s_sub_type,up_fname,up_oname,up_ext,up_date) VALUES(
+                '$sid','$stype','$sstype','$nm1','$onm','$ext','$dt')";
+        $up_id=ei($SQL);
+       
+		if( $stype=="member" || $stype=="logo" || $stype=="make" || $stype=="category")
+        {//creating thumbnail for the uploaded file
+        	create_thumb($up_id,100);
+        }
+		if( $stype=="dealer"  && $sstype="manager")
+		{
+		create_thumb($up_id,60);
+		}
+        return $up_id;
+    }
+    return 0;
+}
+########################################
+function get_dd_list($sel_id,&$option,$show_all=0)
+{
+    $ss=0;
+    for($i=1;$i<=31;$i++)
+    {
+        if($i==$sel_id){$sel="selected";$ss=1;}
+        $option.="<option value=\"$i\"$sel>$i</option>";
+        $sel="";
+    }
+    if($show_all==1)
+    {
+        if($sel_id==-2){$sel="selected";$ss=1;}
+        $option="<option value=\"-2\" $sel>All</option>".$option;
+    }
+    if ($ss==0)
+    {
+         $option="<option value=\"-1\" selected>Select</option>".$option;
+    }
+    return 1;
+}
+
+########################################
+function get_yy_list($sel_id,$s_yy,$e_yy,&$option,$show_all=0,$select_txt="Select")
+{
+    $dt=getdate();
+    if($s_yy==-2)    {	$s_yy=1940;}//$s_yy=$dt[year]-10;    }
+    if($e_yy==-2)    {	$e_yy=$dt[year]+10;    }
+    $ss=0;
+    for($i=$s_yy;$i<=$e_yy;$i++)
+    {
+        if($i==$sel_id){$sel="selected";$ss=1;}
+        $option.="<option value=\"$i\"$sel>$i</option>";
+        $sel="";
+    }
+    if($show_all==1)
+    {
+        if($sel_id==-2){$sel="selected";$ss=1;}
+        $option="<option value=\"-2\" $sel>All</option>".$option;
+    }
+    if ($ss==0)
+    {
+         $option="<option value=\"-1\" selected>$select_txt</option>".$option;
+    }
+    return 1;
+}
+########################################
+function get_mm_list($sel_id,&$option, $show_all=0)
+{
+    $mon[1]="January";
+    $mon[2]="Febuary";
+    $mon[3]="March";
+    $mon[4]="April";
+    $mon[5]="May";
+    $mon[6]="June";
+    $mon[7]="July";
+    $mon[8]="August";
+    $mon[9]="September";
+    $mon[10]="October";
+    $mon[11]="November";
+    $mon[12]="December";
+    $ss=0;
+    for($i=1;$i<=12;$i++)
+    {
+        if($i==$sel_id){$sel="selected";$ss=1;}
+        $option.="<option value=\"$i\"$sel>$mon[$i]</option>";
+        $sel="";
+    }
+    if($show_all==1)
+    {
+        if($sel_id==-2){$sel="selected";$ss=1;}
+        $option="<option value=\"-2\" $sel>All</option>".$option;
+    }
+    if ($ss==0)
+    {
+         $option="<option value=\"-1\" selected>Select</option>".$option;
+    }
+    return 1;
+}
+###################################
+function short_txt($str,$len=30)
+{
+	$length=strlen($str);
+	$short_str="";
+	if($length>$len)
+	{
+		$sub_str=substr($str,0,$len);
+		$noOfChars=$len-(strlen(strrchr($sub_str," ")));
+		$short_str=substr($sub_str,0,$noOfChars);
+	}
+	else
+	{
+		$short_str=$str;
+	}
+	$len=strlen($short_str);
+	$pos=strpos($short_str,"&");
+	if($pos>0 && $pos==$len-1)
+	{
+	   $short_str=substr($short_str,0,$pos);
+	}
+	return $short_str;
+}
+
+############################
+#truncates the passed in string upto the passed in length
+function tstr($data, $len=255)
+{
+    $more="";
+    if (strlen($data)>$len){$more="...";}
+    return substr($data,0,$len).$more;
+}
+################################
+function format_ldt($time,&$ldt)
+{
+    format_date($time,$ldt,$tm);
+}
+#################################
+function grc($tab_name,$con,$print=0)
+{
+    $SQL = "SELECT count(*) FROM $tab_name $con";
+    if($print==1)
+    {
+		print $SQL."<br>";
+    }
+    $rs=mysql_query($SQL) or die(mysql_error()."<br>$SQL");
+    $data=mysql_fetch_array($rs);
+    return $data[0];
+}
+##############################33
+function eq($sql,&$rs,$print=0)
+{
+    if($print==1)
+    {
+	print $sql."<br>";
+    }
+    $rs=mysql_query($sql) or die(mysql_error().$sql);
+    return mysql_affected_rows();
+}
+##############################33
+function ei($sql,$print=0)
+{
+    if($print==1)
+    {
+	print $sql."<br>";
+    }
+    mysql_query($sql) or die(mysql_error().$sql);
+    return mysql_insert_id();
+}
+###########################################
+function mfa($rs)
+{
+    $data=mysql_fetch_assoc($rs);
+    if($data)
+    {
+                foreach($data as $k2=>$v2)
+                {
+				    $v2=stripslashes($v2);
+				    $k1=$k2."_";
+				   $data[$k1]=parse_col($k2,stripslashes($v2));
+                }
+    }
+    return $data;
+}
+###################################
+function DIN_ALL($ary)
+{
+    foreach($ary as $k=>$v)
+    {
+        $ary[$k]=DIN($v);
+    }
+    return $ary;
+}
+#################################
+//for storage to database
+function DIN($input)
+{ 
+	$input = trim($input); 
+    if (!get_magic_quotes_gpc())
+	{ 
+            return addslashes($input);
+	} 
+	return $input; 
+}
+##############################################
+#sends the mail
+function send_mail($to_name,$to_mail,$f_name,$f_mail,$subject,$message,$msg_text="")
+{
+    global $AdminEmail;
+    global $SiteName;
+    global $AdminName;
+    if($f_name=="" AND $f_mail=="")
+    {
+		$f_name=$SiteName;
+		$f_mail=$AdminEmail;
+    }
+    if($to_name=="" AND $to_mail=="")
+    {
+		$to_name=$AdminName;
+		$to_mail=$AdminEmail;
+    }
+    if(strlen($msg_text)==0){$msg_text=$message;}
+    $msg_text=str_replace("<br>","\n",$msg_text);
+    $msg_text=str_replace("\n","\n\r",$msg_text);
+    //$message=str_replace("\n","<br>",$message);    
+    
+    $t = new htmlMimeMail();
+    $from="$f_name <$f_mail>";
+    $t->setHtml($message,$text_ver);
+    $t->setFrom($from);
+    $t->setSubject($subject);
+    $mail="$to_name <$to_mail>";
+    $result = $t->send(array($mail,'')); 
+    return;
+}
+##################
+#checks wheter passed in file type is valid or not
+function isvalid_file_type($ext)
+{
+    if(grc("SELECT * FROM file_type","WHERE ft_name='$ext'")==0)
+    {
+        return -1;
+    }
+    return 1;
+}
+#######################################
+#displays the message and then die :-0
+function kill($msg)
+{
+    die("<center><h3>$msg</h3></center>");
+}
+
+####################################
+#formats date
+function format_date($tm,&$dt,&$time)
+{
+    $tm=getdate($tm);
+    $dt=substr($tm[month],0,3).". $tm[mday], $tm[year]";
+    $time="$dt - $tm[hours]:$tm[minutes]";
+    return $dt;
+}
+#################################
+function checkMail($email)
+{
+	if(ereg("^[a-zA-Z0-9_\.]+@[a-zA-Z0-9\-]+[\.a-zA-Z0-9]+$", $email))
+	{
+		list($t1,$t2)=spliti("@",$email);
+		list($t1,$t2)=spliti("\.",$t2);
+		if(strlen($t2)==0)
+		{
+			return 0;
+		}
+		return 1;
+	}else {
+		return 0;
+	}
+}
+#################################
+function checkNumeric($num)
+{
+    return is_numeric($num);
+	if(ereg("^[0-9]+$", $num))
+	{
+		return 0;
+	}else {
+		return 1;
+	}
+}
+#################################
+function checkPhone($num)
+{
+   #now checking home phone no
+    $num=str_replace(" ","",$num);
+    $num=str_replace("(","",$num);
+    $num=str_replace(")","",$num);
+    list($p1,$p2,$p3)=spliti("-",$num);
+    if(strlen($num)==0)
+    {
+        return 0;
+    }
+    elseif(strlen($p1)!=3 or strlen($p2)!=3 or strlen($p3)!=4 or
+           checkNumeric($p1)==0 or checkNumeric($p2)==0 or checkNumeric($p3)==0)
+    {
+        return 0;
+    }
+    return 1;
+}
+#################################
+function checkChar($char)
+{
+	if(ereg("^[a-zA-Z \,\]+$", $char))
+	{
+		return 1;
+	}else {
+		return 0;
+	}
+}
+
+#################################
+function checkAlpha($alpha)
+{
+	if(ereg("^[a-zA-Z \,\]+$", $alpha))
+	{
+		return 0;
+	}else {
+		return 1;
+	}
+}
+#################################
+function checkAlphaNumeric($alpha)
+{
+	if(ereg("^[a-zA-Z0-9 \,\]+$", $alpha))
+	{
+		return 0;
+	}else {
+		return 1;
+	}
+}
+######################################
+function unset_cookie()
+{
+	setcookie("IdoddleCookie", 0, time());  //delete now
+	$_COOKIE[IdoddleCookie]=0;
+}
+######################################
+function get_cookie()
+{
+	return $_COOKIE[IdoddleCookie];
+}
+######################################
+function set_cookie($val)
+{
+	setcookie("IdoddleCookie", $val, time()*3600000);  //cookie for ever
+	$_COOKIE[IdoddleCookie]=$val;
+}
+###################################
+function get_cmp_cat_list($cmp_id,$maxlen=15)
+{
+	$sep="";
+	$cat_list="";
+	$cat_list1="";
+	$SQL="SELECT cat_id,cat_title FROM competition_category,category WHERE cc_cat_id=cat_id AND cc_cmp_id='$cmp_id'";
+	eq($SQL,$rs);
+	while($data=mfa($rs))
+	{
+		if(strlen($cat_list1)>=$maxlen) { break;}
+		$cat_list1.=$sep.$data[cat_title];
+		$cat_list.=$sep."<a href='".$SVP."competition.php?cat_id=".$data[cat_id]."' class='test1'>".$data[cat_title];
+		$sep=" | ";
+	}
+	return $cat_list;
+}
+###################################
+function get_member_menu()
+{
+    global $SVP;
+    global $SUP;
+    global $SiteName;
+    $t = new Template($SUP."templates");
+    $t->set_file("MyFileHandle","member_menu.htm");
+    if(gri("member","WHERE mem_id='$_SESSION[MID]'","",$mem)>0)
+	{
+		foreach($mem as $k=>$v)
+		{
+			if($k=="mem_fname") $v=ucwords($v);
+			$t->set_var (array( "$k"=>$v,));
+		}
+	}
+    $t->set_var (array( "SVP"=>$SVP,			
+						"SiteName"=>$SiteName,
+		                ));
+    $t->parse("MyOutput","MyFileHandle"); 
+	return $t->get("MyOutput");
+}
+
+###################################
+
+
+#####################################
+#parse the passed in data with index_hf.htm 
+function parse_popup($mid_data,$return_output=0)//is return_output is 1 then this function will return output and if not then print it
+{
+    global $SVP;
+    global $SUP;
+    global $SIP;
+    global $SiteName;
+    format_date(time(),$dt,$time);
+    $t = new Template($SUP."templates");
+    $t->set_file("MyFileHandle","index_popup.htm");
+    
+    $t->set_var (array( "mid_data"=>$mid_data,
+				"SERVER_PATH"=>$SVP,
+				"ICON_PATH"=>$Server_Icon_Path,
+				"dt"=>$dt,
+				"SiteName"=>$SiteName,
+				"srch_str"=>$_REQUEST[srch_str],
+                ));
+    $t->parse("MyOutput","MyFileHandle"); 
+    if($return_output==1)
+    {
+	return $t->get("MyOutput");
+    }
+    $t->p("MyOutput");
+}
+###################################
+#parse the passed in data with index_hf.htm 
+function parse_index($mid_data,$return_output=0)//is return_output is 1 then this function will return output and if not then print it
+{
+	global $SVP;
+	global $SiteName;
+	global $MetaTitle;
+	global $MetaDescription;
+	global $MetaKeyword;
+	global $Page;
+	$R=DIN_ALL($_REQUEST);
+	$t = new Template("templates");
+	$t->set_file("MyFileHandle","index_hf.htm");
+	$login_txt="Login";
+	if($_SESSION[MID]>0 )
+	{
+	  $login_txt="My Account";
+	}
+	
+	//for home page category tabs
+	$t->set_block('MyFileHandle', 'AccessBlockTopCategoryList', 'ABlockList');
+	$SQL="SELECT cat_id,cat_title FROM category WHERE cat_active='1' AND cat_p_cat_id='0' AND cat_show_tab='1' ORDER BY cat_title LIMIT 0,8";
+	eq($SQL,$rs);
+	while($data=mfa($rs))
+	{
+	  $data[cat_title]=short_txt($data[cat_title],22,1);
+
+	  foreach($data as $k=>$v)
+	  {
+	     $t->set_var(array("$k"=>$v));
+	  }
+
+	  if($data[cat_id]==$_SESSION[category_id])
+		  $t->set_var(array("sel_tab"=>"class='current'"));	
+	  else
+	  	   $t->set_var(array("sel_tab"=>""));				    
+
+	  $t->Parse('ABlockList', 'AccessBlockTopCategoryList', true);	
+	}
+	
+	$t->set_var(array("SVP"=>$SVP,
+					  "mid_data"=>$mid_data,
+					  "login_txt"=>$login_txt,
+					  "top_right_banner"=>banner_management("home_top_right",0),
+					  "top_banner"=>banner_management("home_horizontal_top",0),
+					  "MetaTitle"=>$MetaTitle,
+					  "MetaDescription"=>$MetaDescription,
+					  "MetaKeyword"=>$MetaKeyword,					  
+					  "SiteName"=>$SiteName,
+					  
+					  ));
+	$t->parse("MyOutput","MyFileHandle");
+    if($return_output==1)
+    {
+	return $t->get("MyOutput");
+    }
+    $t->p("MyOutput");
+}
+
+###################################
+#parse the passed in data with index_hf.htm 
+function dealer_index($mid_data,$msg_inq,$return_output=0)//is return_output is 1 then this function will return output and if not then print it
+{
+	global $SVP;
+	global $SiteName;
+	global $MetaTitle;
+	global $MetaDescription;
+	global $MetaKeyword;
+	global $Page;
+	$R=DIN_ALL($_REQUEST);
+	$t = new Template("templates");
+	$t->set_file("MyFileHandle","dealer_hf.htm");
+	$login_style="";
+	$member_menu="";
+	if($_SESSION[MID]>0 )
+	{
+	  //$member_menu=get_member_menu();
+	  $login_style="display:none";
+	}
+	
+	gri("dealer","WHERE  dl_id='$R[dl_id]'","",$dl);
+	  foreach($dl as $k=>$v)
+	  {
+	     $t->set_var(array("$k"=>$v));
+	  }
+	
+	$t->set_block('MyFileHandle', 'AccessBlockTopCategoryList', 'ABlockList');
+	$SQL="SELECT cat_id,cat_title FROM category WHERE cat_active='1' AND cat_p_cat_id='0' ORDER BY cat_title LIMIT 0,5";
+	eq($SQL,$rs);
+	while($data=mfa($rs))
+	{
+	  foreach($data as $k=>$v)
+	  {
+	     $t->set_var(array("$k"=>$v));
+	  }
+	}
+	
+	$cate_ary=array();
+	$SQL="SELECT cat_id FROM category WHERE cat_active='1' AND cat_p_cat_id='0' ORDER BY rand() LIMIT 0,5";
+	eq($SQL,$rs);
+	while($data=mfa($rs))
+	{
+	  array_push($cate_ary,$data[cat_id]);
+	}
+		
+	$t->set_var(array("SVP"=>$SVP,
+					  "msg_inq"=>$msg_inq,
+					  "mid_data"=>$mid_data,
+					  "login_style"=>$login_style,
+					  "member_menu"=>$member_menu,
+					  "category_matrix"=>get_category_matrix($cate_ary),
+					  "inv_msg"=>$_REQUEST[inv_msg],
+					  "MetaTitle"=>$MetaTitle,
+					  "MetaDescription"=>$MetaDescription,
+					  "MetaKeyword"=>$MetaKeyword,					  
+					  "SiteName"=>$SiteName,
+					  ));
+	$t->parse("MyOutput","MyFileHandle");
+    if($return_output==1)
+    {
+	return $t->get("MyOutput");
+    }
+    $t->p("MyOutput");
+}
+
+###############################
+function parse_col($k,$v)
+{
+    global $ColDateAry;
+    global $ColStateAry;
+    global $ColCountryAry;
+    global $ColGenderAry;
+    global $ColYNAry;
+    global $ColNumberAry;
+    global $ColCheckedAry;
+    global $ColCurrencyAry;
+    global $ColFileSizeAry;
+    if(in_array($k,$ColDateAry))
+	{ if($v==0 || $v=="" )
+		{
+			$v="--";
+		}
+		else
+		{
+		$v=format_short_date($v,$tmp);
+		}
+	}
+	
+    if(in_array($k,$ColStateAry)){$v=get_state_name($v);}
+    if(in_array($k,$ColCountryAry)){$v=get_country_name($v);}
+    if(in_array($k,$ColGenderAry)){$v=get_gender($v);}
+    if(in_array($k,$ColNumberAry)){$v=number_format($v,2);}
+    if(in_array($k,$ColFileSizeAry)){$v=format_file_size($v);}
+    if(in_array($k,$ColCurrencyAry))
+    {
+    	global $CSIGN;
+    	$v=number_format($v,2);
+    	$v=$CSIGN."$v";
+    }
+    if(in_array($k,$ColYNAry))
+    {
+	if($v==1)	{	    $v="Yes";	}	else	{	    $v="No";	}
+    }
+    if(in_array($k,$ColCheckedAry))
+    {
+	if($v==1)	{	    $v="checked";	}
+    }
+    return $v;
+}
+################################
+function get_gender($v)
+{
+    $g="--";
+    if($v==0){$g="Male";}
+    if($v==1){$g="Female";}
+    return $g;
+}
+###################################
+function get_value_ary($table,$col,$con="")
+{
+    $ary=array();
+    $SQL = "SELECT $col FROM $table $con";
+    eq($SQL,$rs);
+    while($data=mfa($rs))
+    {
+	array_push($ary,$data[$col]);
+	}
+    return $ary;
+}
+###################################
+function get_state_name($sl_id,$show_short=1)
+{
+    get_row_con_info("state_list","WHERE sl_id='$sl_id'",$sl,0);
+    if($show_short==1)
+    {
+	return $sl[sl_short_name];
+    }
+    return $sl[state_name];
+}
+###################################
+function get_page_source($id)
+{
+	global $SVP;
+	$t=new Template("templates");
+	$t->set_file("MyFileHandle","title_source.htm");
+	
+	gri("hf","WHERE hf_htaccess='$id'","",$hf);
+	foreach($hf as $k=>$v)
+	{
+		$t->set_var(array("$k"=>$v,));
+
+	}
+	$t->set_var(array("SVP"=>$SVP,));
+	$t->parse("MyOutPut","MyFileHandle");
+	return $t->get("MyOutPut");
+}
+########################################
+function get_page_matrix($title, $ary)
+{
+	global $SVP;
+	if(!sizeof($ary))
+	{
+		return "";
+	}
+	
+	$cols=3;
+	$cols_=$cols-1;
+	$t=new Template("templates");
+	$t->set_file("MyFileHandle","title_matrix.htm");
+	$t->set_block('MyFileHandle', 'AccessBlockTitleMatrixList', 'ABlockList');
+	$i=0;
+	foreach($ary as $k=>$v)
+	{
+		$t->set_var(array("title_matrix_".$i%$cols=>get_page_source($v),));
+		if($i%$cols==$cols_ AND $i>0)
+		{
+			$t->Parse('ABlockList', 'AccessBlockTitleMatrixList', true);		
+		}
+		$i++;
+	}
+	if($i>0 AND $i%$cols!=$cols AND $i%$cols!=0)
+	{
+		for($j=$i;$i>0;$j++)
+		{
+			$t->set_var(array("title_matrix_".$j%$cols=>"",));
+			if($j%$cols==$cols_)
+			{
+				$t->Parse('ABlockList', 'AccessBlockTitleMatrixList', true);	
+				$i=0;
+			}
+		}
+	}
+	$t->set_var(array("title"=>$title,"SVP"=>$SVP,));
+	$t->parse("MyOutPut","MyFileHandle");
+	return $t->get("MyOutPut");
+}
+##################################
+function get_country_name($cl_id,$show_short=1)
+{
+    gri("country","WHERE c_id='$c_id'","",$cl,0);
+     if($show_short==1)
+    {
+	return $cl[c_code];
+    }
+    return $cl[c_title];
+}
+/////////////////////////////////////////////////////////
+function get_nb_text_multi($tot_rows,$title,$st_pos=0,&$con_limit,&$nb_text,$nrpp=0,$nspp=10,$func_ext="",$admin=0)
+{
+    $nspp=10;
+    $link_color="#FFFFFF";
+    $unlink_color="#FF0000";
+    global $NRPP;
+    if($st_pos==""){$st_pos=0;}
+    if(!$nrpp)    {	$nrpp=$NRPP;    }
+    if($admin==1)
+    {
+    	//gri("site_admin","","",$row);
+    	//$nrpp=$row[sa_nrpp];
+		$link_color="#000000";
+    }
+    $con_limit=" LIMIT $st_pos, $nrpp";
+    $con_mid="";
+    $first=0;
+    $last=$nrpp*(round($tot_rows/$nrpp));
+    $k=1;
+    //getting the set
+    for($i=0;$i!=1;)
+    {
+	if(($k*$nrpp*$nspp)>$st_pos)	{	    $set=$k;	    $i=1;	}
+	$k++;
+    }
+    $next=$set*$nrpp*$nspp;
+    $back=$next-($nrpp*$nspp);
+    $set1=$set;
+    if($set>1){$set1=2;}
+    $prev=$next-($nrpp*$nspp*$set1);
+    for($i=($back/$nrpp);$i<($next/$nrpp);$i++)
+    {
+	$pos=$i*$nrpp;
+	$b1="";$b2="";
+	if($pos==$st_pos){$b1="<b>";$b2="</b>";}
+	$j=$i+1;
+	$HL1="";$HL2=""; $color=$link_color;
+	if($pos>=$tot_rows)	{	 continue;   $HL1="<!--";$HL2="-->"; $color=$unlink_color;	    }
+	$con_mid.=<<<EOM
+&nbsp;$HL1<a href="JavaScript:nb$func_ext($pos)">$HL2$b1<font color="$color">$j</font>$b2$HL1</a>$HL2
+EOM
+;
+    }
+    $curr_pos1=$st_pos+1;
+    $curr_pos2=$st_pos+$nrpp;
+    if($curr_pos2>$tot_rows){$curr_pos2=$tot_rows;}
+    $HFP1="";$HFP2="";	$HNL1="";$HNL2=""; $color_first=$link_color; $color_last=$link_color;
+    if(($next-($nrpp*$nspp))==0)    		{	$HFP1="<!--";$HFP2="-->";    $color_first=$unlink_color;}
+    if($next>=$tot_rows)    	{	$HNL1="<!--";$HNL2="-->";    $color_last=$unlink_color;}
+    if($last>$tot_rows){$last=$last-$nrpp;}
+     /*$nb_text=<<<EOM
+            $title $curr_pos1 - $curr_pos2 of $tot_rows &nbsp;
+            $HFP1<a href="JavaScript:nb($first)">$HFP2 <font color="$color_first">First</font> $HFP1</a>$HFP2
+            //$HFP1<a href="JavaScript:nb($prev)">$HFP2 <font color="$color_first">Previous $nspp </font>$HFP1</a>$HFP2//$con_mid
+            //$HNL1<a href="JavaScript:nb($next)">$HNL2 <font color="$color_last">Next $nspp </font>$HNL1</a>$HNL2
+            //$HNL1<a href="JavaScript:nb($last)">$HNL2 <font color="$color_last">Last</font>$HNL1</a>$HNL2
+EOM
+;*/
+     $n="";$b="";
+    if($curr_pos1>1)
+    {
+	$b=$st_pos-$nrpp;
+	$b="<a href=\"JavaScript:nb$func_ext($b)\">&lt;&lt;&nbsp;Previous</a>";
+    }
+    if($curr_pos2<$tot_rows)
+    {
+	$n="<a href=\"JavaScript:nb$func_ext($curr_pos2)\">Next&nbsp;&gt;&gt;</a>";
+    }
+    $nb_text=<<<EOM
+           $title $curr_pos1 - $curr_pos2 of $tot_rows $b [$con_mid ] $n
+EOM
+;
+if($tot_rows<=$nrpp)
+{
+	$nb_text="";
+}
+}
+##########################
+function get_new_seat_option_list($sel_id,&$option,$show_all=0,$con="",$show_select=1,$select_txt="Please Select")
+{
+	$table="competition_seat,seat";
+	$id_col="cs_id";
+	$val_col=array("seat_title","cs_seat_price_");
+    if(!is_array($sel_id))    {	$sel_id=array($sel_id);    }
+    $SQL = "SELECT * FROM $table $con "; 
+   eq($SQL,$rs);
+    $ss=0;
+    while($data = mfa($rs))
+    {
+		$show_val="";
+		if(is_array($val_col))
+		{
+			foreach($val_col as $val)
+			{
+			  if($val=="cs_seat_price_")
+			  {
+			  	if($data[cs_quantity]>0 && grc("cart_item","WHERE ci_seat_id='$data[cs_seat_id]' AND ci_cmp_id='$data[cs_cmp_id]'")>=$data[cs_quantity])
+				{
+					$data[$val]=" Full";
+					$data[$id_col]="-1";
+				}
+				if($data[cs_quantity]==0)
+				{
+					$data[$val]=" Full";
+					$data[$id_col]="-1";
+				}
+				
+			  }
+			 $show_val.=" ".$data[$val];
+			}
+		  	$show_val=substr($show_val,1);
+		}else{
+		  	$show_val=$data[$val_col];
+		}
+        if(in_array($data[$id_col],$sel_id)){$sel="selected";$ss=1;}
+        $option.="<option value=\"$data[$id_col]\"$sel>$show_val</option>";
+        $sel="";
+    }
+    $sel="";
+    
+    if($ss==0 and $show_all==1)
+    {
+        $sel="selected";
+        $ss=1;
+    }
+    if($show_all==1)
+    {
+        $option="<option value=\"-2\"$sel>".All."</option>".$option;
+    }
+    if ($ss==0 AND $show_select==1)
+    {
+        $option="<option value=\"-1\" selected>$select_txt</option>".$option;
+    }
+    if ($parent==1)
+    {
+        $option="<option value=\"0\" selected>-Parent-</option>".$option;
+    }
+
+   
+}
+
+##########################
+function get_new_option_list($table,$id_col,$val_col,$sel_id,&$option,$show_all=0,$con="",$show_select=1,$parent=0,$select_txt="Please Select")
+{
+	if($table=="country_list" AND $sel_id=="")
+	{
+		$sel_id=238;
+	}
+    if(!is_array($sel_id))    {	$sel_id=array($sel_id); }
+    $SQL = "SELECT * FROM $table $con "; 
+  	eq($SQL,$rs);
+    $ss=0;
+    while($data = mfa($rs))
+    {
+		$show_val="";
+		if(is_array($val_col))
+		{
+			foreach($val_col as $val)
+			{
+				$sep1="";
+				$sep2="";
+				if($val=="dl_account_number")
+				{
+				  $sep1=" - (";
+				  $sep2=")";
+				}
+			 	$show_val.=$sep1.$data[$val].$sep2;
+			}
+		  	//$show_val=substr($show_val,1);
+		}else{
+		  	$show_val=$data[$val_col];
+		}
+        if(in_array($data[$id_col],$sel_id)){$sel="selected";$ss=1;}
+        $option.="<option value=\"$data[$id_col]\"$sel>$show_val</option>";
+        $sel="";
+    }
+    $sel="";
+    if ($parent==1)
+    {	
+		if($ss==0 and in_array("0",$sel_id) )
+		{
+			$sel="selected";
+			$ss=1;
+		}
+        $option="<option value=\"0\" $sel>-Parent-</option>".$option;
+    }
+    if($ss==0 and $show_all==1)
+    {
+        $sel="selected";
+        $ss=1;
+    }
+    if($show_all==1)
+    {
+        $option="<option value=\"-2\"$sel>".All."</option>".$option;
+    }
+    if ($ss==0 AND $show_select==1)
+    {
+        $option="<option value=\"-1\" selected>$select_txt</option>".$option;
+    }
+
+   
+}
+#######################################################
+function fe($fnm)
+{
+    global $func_ary;
+    if(in_array($fnm,$func_ary))
+    {
+	return function_exists($fnm);
+    }
+    return 0;
+}
+
+######################################################
+function nr($rs)
+{
+    return mysql_num_rows($rs);
+}
+###########################################
+function gri($tab_name,$con,$cols,&$row,$show_err=1,$print_sql=0)
+{
+    if($cols=="")    {	$cols="*";    }
+    $ss=0;
+    $SQL = "SELECT $cols FROM $tab_name $con ";
+    if($print_sql==1)
+    {
+	print "$SQL<br>";
+    }
+    eq($SQL,$rs);
+    if($ss and !$rs)
+    {
+        kill("Invalid condition $con on  table $tab_name");
+    }
+    if($rs)
+    {
+	$row=mfa($rs);
+	return mysql_num_rows($rs);
+    }
+    return 0;
+}
+######################################################
+function get_mt()
+{
+    list($usec, $sec) = explode(" ", microtime());
+    return ((float)$usec + (float)$sec);
+}
+##################
+function ar()
+{
+return mysql_affected_rows();
+}
+###########################################
+function fgc($url)
+{
+	global $IsOnline;
+	if($IsOnline==0 AND strlen($IsOnline)>0)
+	{
+		return file_get_contents($url);
+	}
+	if($url=="")
+	{
+		return "";
+	}
+	$ch = curl_init();
+	$timeout = 0; // set to zero for no timeout
+	curl_setopt ($ch, CURLOPT_URL, $url);
+	curl_setopt ($ch, CURLOPT_RETURNTRANSFER, 1);
+	curl_setopt ($ch, CURLOPT_CONNECTTIMEOUT, $timeout);
+	$file_contents = curl_exec($ch);
+	curl_close($ch);
+	
+	// display file
+	return $file_contents;
+
+}
+#############################
+function get_cat_list_admin($sel_id,&$option,$show_all=0,$show_parent=0,$show_select=0,$con="")
+{
+	
+	$sel="";	$option=""; $sep="";
+	 if(!is_array($sel_id))    {	$sel_id=array($sel_id);    }
+    $SQL = "SELECT * FROM category WHERE cat_p_cat_id=0 ORDER BY cat_title";
+    eq($SQL,$rs);
+    while($data = mfa($rs))
+    {	
+		
+		 if(in_array($data[cat_id],$sel_id)){$sel="selected";$ss=1;}
+       
+		//echo $sel_id." ".$data[cat_id]." ".$sel."<br>";
+        $option.="<option value=\"$data[cat_id]\" $sel class='pcat'>$data[cat_title]</option>";
+       // $option.="<optgroup label=".$data[cat_title].">";
+        if(grc("category","WHERE cat_p_cat_id='$data[cat_id]'")>0)
+		{
+			$option.=get_category_child_node($data[cat_id],$sel_id,$sep);
+		}
+        //$option.="</optgroup>";
+		$option.="</option>";
+        $sel="";
+    }
+
+    $sel="";
+    if($ss==0 and $show_all==1)
+    {
+        $sel="selected";
+        $ss=1;
+    }
+
+    if($show_all==1)
+    {
+        $option="<option value=\"-2\" $sel>".All."</option>".$option;
+    }
+    if ( $show_select==1)
+    {
+        $option="<option value=\"-1\" selected>Please Select</option>".$option;
+    }
+    if ($show_parent==1)
+    {
+        $option="<option value=\"0\" selected>-Parent-</option>".$option;
+    }
+}
+#####################################
+function get_category_child_node($cat_id,$sel_id,$sep)
+{
+	//$sep=str_replace("-","&nbsp;",$sep);
+	 if(!is_array($sel_id))    {	$sel_id=array($sel_id);    }
+	$sep.="&nbsp;--";
+	$option="";	
+    $SQL = "SELECT * FROM category WHERE cat_p_cat_id='$cat_id' ORDER BY cat_title";
+	eq($SQL,$rs1);
+	while($data=mfa($rs1))
+	{
+		$sel="";
+		 if(in_array($data[cat_id],$sel_id)){$sel="selected";$ss=1;}
+		$option.="<option value=\"$data[cat_id]\"$sel>$sep $data[cat_title]</option>";
+		if(grc("category","WHERE cat_p_cat_id='$data[cat_id]'")>0)
+		{
+			$option.=get_category_child_node($data[cat_id],$sel_id,$sep);
+		}
+	}
+	return $option;
+}
+#####################################################
+function get_cat_list($sel_id,&$option,$show_parent=0,$show_child=1,$parent_readonly=1,$con="")
+{
+	
+
+	$option=""; $sel=""; $ss=0;
+	$SQL = "SELECT * FROM category WHERE 1 $con ORDER BY cat_title";
+	eq($SQL,$rs);
+	while($data=mfa($rs))
+	{
+		$sel="";
+		if($parent_readonly==1)
+		{
+			$option.="<optgroup label='$data[cat_title]'>";
+		}
+		else
+		{
+			if($data[cat_id]==$sel_id)
+			{
+				$ss=1;
+				$sel="selected";
+			}
+			$option.="<option value='$data[cat_id]' $sel>$data[cat_title]</option>";
+		}
+			if($show_child==1)
+			{
+				$SQL = "SELECT * FROM category WHERE cat_p_cat_id='$data[cat_id]' ORDER BY cat_title";
+				eq($SQL,$rs1);
+				while($data1=mfa($rs1))
+				{
+					$sel="";
+					if($data1[cat_id]==$sel_id)
+					{
+						$ss=1;
+						$sel="selected";
+					}
+
+					$option.="<option value='$data1[cat_id]' $sel>--$data1[cat_title]</option>";
+				}
+			}
+
+		if($parent_readonly==1)
+		{
+			$option.="</optgroup>";
+		}
+	}
+
+	if($show_parent==1)
+	{
+		$sel="";
+		if($ss==0)
+		{
+			$sel="selected";
+		}
+
+		$option="<option value='0' $sel>-Parent Category-</option>$option";
+	}
+}
+
+
+###########################################
+
+function xml_create_tag($xml,$tag_nm)
+{
+return "<tag id=\"$tag_nm\">".htmlspecialchars($xml)."</tag>";
+}
+
+###############################################
+
+function parse_xml_js($xml="",$print=1)
+{
+global $SUP;
+global $AdminEmail;
+$xml=<<<EOM
+<?xml version='1.0' encoding='ISO-8859-1'?>
+<ROOT>
+$xml
+</ROOT>
+EOM;
+$handle=fopen("a.xml","w");
+fputs($handle,$xml);
+fclose($handle);
+	if($print==1)
+	{
+	header("Content-type: text/xml");
+	print $xml;
+	return 1;
+	}
+return $xml;
+}
+?>

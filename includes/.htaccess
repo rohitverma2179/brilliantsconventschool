@@ -1,0 +1,5 @@
+RewriteEngine On
+### nb start
+
+RewriteRule ^(.*).html pg.php?act=pg&url=$1 [L]
+

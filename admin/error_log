@@ -1,0 +1,66 @@
+[30-Sep-2018 11:04:21 UTC] PHP Fatal error:  Call to a member function result() on a non-object in /home/webtesting/public_html/aafiya_form/healthadmin/application/views/dashboard.php on line 87
+[30-Sep-2018 11:04:23 UTC] PHP Fatal error:  Call to a member function result() on a non-object in /home/webtesting/public_html/aafiya_form/healthadmin/application/views/dashboard.php on line 87
+[30-Sep-2018 11:15:30 UTC] PHP Fatal error:  Cannot use object of type stdClass as array in /home/webtesting/public_html/aafiya_form/healthadmin/application/views/dashboard.php on line 90
+[30-Sep-2018 11:15:31 UTC] PHP Fatal error:  Cannot use object of type stdClass as array in /home/webtesting/public_html/aafiya_form/healthadmin/application/views/dashboard.php on line 90
+[30-Sep-2018 11:17:09 UTC] PHP Fatal error:  Call to a member function result() on a non-object in /home/webtesting/public_html/aafiya_form/healthadmin/application/views/dashboard.php on line 87
+[01-Oct-2018 07:06:04 UTC] PHP Fatal error:  Call to undefined function base64encode() in /home/webtesting/public_html/aafiya_form/healthadmin/application/models/Home_model.php on line 127
+[01-Oct-2018 09:36:20 UTC] PHP Fatal error:  Call to undefined method CI_DB_mysqli_driver::result_array() in /home/webtesting/public_html/aafiya_form/healthadmin/application/models/Home_model.php on line 133
+[01-Oct-2018 13:12:58 UTC] PHP Fatal error:  Call to undefined method CI_DB_mysqli_driver::result_array() in /home/webtesting/public_html/aafiya_form/healthadmin/application/models/Home_model.php on line 122
+[01-Oct-2018 13:13:49 UTC] PHP Fatal error:  Call to undefined method CI_DB_mysqli_driver::result_array() in /home/webtesting/public_html/aafiya_form/healthadmin/application/models/Home_model.php on line 122
+[03-Oct-2018 07:43:50 UTC] PHP Parse error:  syntax error, unexpected '}', expecting ',' or ';' in /home/webtesting/public_html/aafiya_form/healthadmin/application/views/view-inner.php on line 412
+[03-Oct-2018 09:01:20 UTC] PHP Fatal error:  Call to undefined method CI_DB_mysqli_driver::result_array() in /home/webtesting/public_html/aafiya_form/healthadmin/application/models/Home_model.php on line 123
+[03-Oct-2018 09:01:46 UTC] PHP Fatal error:  Call to undefined method CI_DB_mysqli_driver::result_array() in /home/webtesting/public_html/aafiya_form/healthadmin/application/models/Home_model.php on line 123
+[03-Oct-2018 09:02:10 UTC] PHP Fatal error:  Cannot use object of type mysqli as array in /home/webtesting/public_html/aafiya_form/healthadmin/application/views/policy.php on line 88
+[03-Oct-2018 09:03:10 UTC] PHP Fatal error:  Call to undefined method CI_DB_mysqli_driver::result_array() in /home/webtesting/public_html/aafiya_form/healthadmin/application/models/Home_model.php on line 123
+[03-Oct-2018 09:04:31 UTC] PHP Fatal error:  Call to undefined method CI_DB_mysqli_driver::result_array() in /home/webtesting/public_html/aafiya_form/healthadmin/application/models/Home_model.php on line 123
+[03-Oct-2018 09:04:52 UTC] PHP Fatal error:  Cannot use object of type mysqli as array in /home/webtesting/public_html/aafiya_form/healthadmin/application/views/policy.php on line 88
+[03-Oct-2018 09:04:59 UTC] PHP Fatal error:  Cannot use object of type mysqli as array in /home/webtesting/public_html/aafiya_form/healthadmin/application/views/policy.php on line 88
+[03-Oct-2018 09:05:22 UTC] PHP Fatal error:  Call to undefined method CI_DB_mysqli_driver::result_array() in /home/webtesting/public_html/aafiya_form/healthadmin/application/models/Home_model.php on line 123
+[03-Oct-2018 09:06:00 UTC] PHP Fatal error:  Call to undefined method CI_DB_mysqli_driver::result_array() in /home/webtesting/public_html/aafiya_form/healthadmin/application/models/Home_model.php on line 123
+[03-Oct-2018 09:06:02 UTC] PHP Fatal error:  Call to undefined method CI_DB_mysqli_driver::result_array() in /home/webtesting/public_html/aafiya_form/healthadmin/application/models/Home_model.php on line 123
+[03-Oct-2018 09:06:03 UTC] PHP Fatal error:  Call to undefined method CI_DB_mysqli_driver::result_array() in /home/webtesting/public_html/aafiya_form/healthadmin/application/models/Home_model.php on line 123
+[03-Oct-2018 09:06:04 UTC] PHP Fatal error:  Call to undefined method CI_DB_mysqli_driver::result_array() in /home/webtesting/public_html/aafiya_form/healthadmin/application/models/Home_model.php on line 123
+[04-Oct-2018 10:45:26 UTC] PHP Parse error:  syntax error, unexpected 'public' (T_PUBLIC) in /home/webtesting/public_html/aafiya_form/healthadmin/application/controllers/Healthform.php on line 71
+[04-Oct-2018 13:53:31 UTC] PHP Fatal error:  Maximum execution time of 90 seconds exceeded in /home/webtesting/public_html/aafiya_form/healthadmin/system/libraries/Session/drivers/Session_files_driver.php on line 422
+[04-Oct-2018 14:11:44 UTC] PHP Fatal error:  Maximum execution time of 90 seconds exceeded in /home/webtesting/public_html/aafiya_form/healthadmin/system/libraries/Session/drivers/Session_files_driver.php on line 212
+[05-Oct-2018 04:09:27 UTC] PHP Fatal error:  Maximum execution time of 90 seconds exceeded in /home/webtesting/public_html/aafiya_form/healthadmin/system/libraries/Session/drivers/Session_files_driver.php on line 212
+[05-Oct-2018 04:12:55 UTC] PHP Fatal error:  Maximum execution time of 90 seconds exceeded in /home/webtesting/public_html/aafiya_form/healthadmin/system/libraries/Session/drivers/Session_files_driver.php on line 212
+[05-Oct-2018 05:39:42 UTC] PHP Fatal error:  Maximum execution time of 90 seconds exceeded in /home/webtesting/public_html/aafiya_form/healthadmin/system/libraries/Session/drivers/Session_files_driver.php on line 212
+[05-Oct-2018 05:46:51 UTC] PHP Fatal error:  Maximum execution time of 90 seconds exceeded in /home/webtesting/public_html/aafiya_form/healthadmin/system/libraries/Session/drivers/Session_files_driver.php on line 212
+[05-Oct-2018 05:48:22 UTC] PHP Fatal error:  Maximum execution time of 90 seconds exceeded in /home/webtesting/public_html/aafiya_form/healthadmin/system/libraries/Session/drivers/Session_files_driver.php on line 422
+[05-Oct-2018 05:58:07 UTC] PHP Fatal error:  Call to undefined method CI_DB_mysqli_driver::result_array() in /home/webtesting/public_html/aafiya_form/healthadmin/application/models/Home_model.php on line 123
+[05-Oct-2018 05:58:22 UTC] PHP Fatal error:  Cannot use object of type mysqli as array in /home/webtesting/public_html/aafiya_form/healthadmin/application/views/policy.php on line 88
+[05-Oct-2018 05:58:40 UTC] PHP Fatal error:  Call to a member function result_array() on a non-object in /home/webtesting/public_html/aafiya_form/healthadmin/application/models/Home_model.php on line 123
+[05-Oct-2018 06:06:34 UTC] PHP Fatal error:  Maximum execution time of 90 seconds exceeded in /home/webtesting/public_html/aafiya_form/healthadmin/system/libraries/Session/drivers/Session_files_driver.php on line 422
+[05-Oct-2018 06:08:26 UTC] PHP Fatal error:  Maximum execution time of 90 seconds exceeded in /home/webtesting/public_html/aafiya_form/healthadmin/system/libraries/Session/drivers/Session_files_driver.php on line 212
+[05-Oct-2018 11:59:47 UTC] PHP Parse error:  syntax error, unexpected '?>' in /home/webtesting/public_html/aafiya_form/healthadmin/application/views/template/footer.php on line 7
+[05-Oct-2018 11:59:51 UTC] PHP Parse error:  syntax error, unexpected '?>' in /home/webtesting/public_html/aafiya_form/healthadmin/application/views/template/footer.php on line 7
+[05-Oct-2018 12:49:08 UTC] PHP Parse error:  syntax error, unexpected '}' in /home/webtesting/public_html/aafiya_form/healthadmin/application/views/policy.php on line 144
+[08-Oct-2018 12:37:33 UTC] PHP Fatal error:  Cannot redeclare Home_model::updateposts() in /home/y9kf9fxdb1fi/public_html/admin/application/models/Home_model.php on line 233
+[08-Oct-2018 12:37:52 UTC] PHP Fatal error:  Cannot redeclare Home_model::updateposts() in /home/y9kf9fxdb1fi/public_html/admin/application/models/Home_model.php on line 233
+[08-Oct-2018 12:37:53 UTC] PHP Fatal error:  Cannot redeclare Home_model::updateposts() in /home/y9kf9fxdb1fi/public_html/admin/application/models/Home_model.php on line 233
+[11-Oct-2018 04:44:27 UTC] PHP Fatal error:  require_once(): Failed opening required 'header.php' (include_path='.:/opt/alt/php72/usr/share/pear') in /home/y9kf9fxdb1fi/public_html/admin/application/views/gallery.php on line 2
+[11-Oct-2018 04:45:39 UTC] PHP Fatal error:  require_once(): Failed opening required 'header.php' (include_path='.:/opt/alt/php72/usr/share/pear') in /home/y9kf9fxdb1fi/public_html/admin/application/views/gallery.php on line 2
+[11-Oct-2018 04:45:45 UTC] PHP Fatal error:  require_once(): Failed opening required 'header.php' (include_path='.:/opt/alt/php72/usr/share/pear') in /home/y9kf9fxdb1fi/public_html/admin/application/views/gallery.php on line 2
+[11-Oct-2018 04:45:54 UTC] PHP Fatal error:  require_once(): Failed opening required 'header.php' (include_path='.:/opt/alt/php72/usr/share/pear') in /home/y9kf9fxdb1fi/public_html/admin/application/views/gallery.php on line 2
+[11-Oct-2018 04:45:57 UTC] PHP Fatal error:  require_once(): Failed opening required 'header.php' (include_path='.:/opt/alt/php72/usr/share/pear') in /home/y9kf9fxdb1fi/public_html/admin/application/views/gallery.php on line 2
+[11-Oct-2018 04:46:24 UTC] PHP Fatal error:  require_once(): Failed opening required 'header.php' (include_path='.:/opt/alt/php72/usr/share/pear') in /home/y9kf9fxdb1fi/public_html/admin/application/views/gallery.php on line 2
+[11-Oct-2018 04:46:28 UTC] PHP Fatal error:  require_once(): Failed opening required 'header.php' (include_path='.:/opt/alt/php72/usr/share/pear') in /home/y9kf9fxdb1fi/public_html/admin/application/views/gallery.php on line 2
+[11-Oct-2018 05:13:45 UTC] PHP Fatal error:  require_once(): Failed opening required '/home/y9kf9fxdb1fi/public_html/admin/application/gallery/index.php' (include_path='.:/opt/alt/php72/usr/share/pear') in /home/y9kf9fxdb1fi/public_html/admin/application/views/gallery.php on line 16
+[11-Oct-2018 05:15:02 UTC] PHP Fatal error:  require_once(): Failed opening required '/home/y9kf9fxdb1fi/public_html/admin/application/gallery/index.php' (include_path='.:/opt/alt/php72/usr/share/pear') in /home/y9kf9fxdb1fi/public_html/admin/application/views/gallery.php on line 16
+[12-Oct-2018 05:13:33 UTC] PHP Fatal error:  Cannot declare class Home_model, because the name is already in use in /home/y9kf9fxdb1fi/public_html/admin/application/models/Gallery_model.php on line 181
+[12-Oct-2018 05:16:40 UTC] PHP Fatal error:  Cannot declare class Home_model, because the name is already in use in /home/y9kf9fxdb1fi/public_html/admin/application/models/Gallery_model.php on line 181
+[12-Oct-2018 06:16:12 UTC] PHP Fatal error:  Cannot redeclare Gallery_model::addgallery() in /home/y9kf9fxdb1fi/public_html/admin/application/models/Gallery_model.php on line 33
+[12-Oct-2018 06:16:42 UTC] PHP Fatal error:  Cannot redeclare Gallery_model::addgallery() in /home/y9kf9fxdb1fi/public_html/admin/application/models/Gallery_model.php on line 139
+[12-Oct-2018 06:17:49 UTC] PHP Fatal error:  Cannot redeclare Gallery_model::editposts() in /home/y9kf9fxdb1fi/public_html/admin/application/models/Gallery_model.php on line 148
+[17-Oct-2018 07:24:18 UTC] PHP Fatal error:  Cannot redeclare Gallery_model::delete_post() in /home/y9kf9fxdb1fi/public_html/admin/application/models/Gallery_model.php on line 101
+[17-Oct-2018 07:24:30 UTC] PHP Fatal error:  Cannot redeclare Gallery_model::delete_post() in /home/y9kf9fxdb1fi/public_html/admin/application/models/Gallery_model.php on line 101
+[17-Oct-2018 07:32:25 UTC] PHP Fatal error:  Cannot redeclare Gallery::do_upload() in /home/y9kf9fxdb1fi/public_html/admin/application/controllers/Gallery.php on line 163
+[17-Oct-2018 08:21:53 UTC] PHP Fatal error:  Cannot redeclare Gallery::do_upload() in /home/y9kf9fxdb1fi/public_html/admin/application/controllers/Gallery.php on line 163
+[17-Oct-2018 08:21:56 UTC] PHP Fatal error:  Cannot redeclare Gallery::do_upload() in /home/y9kf9fxdb1fi/public_html/admin/application/controllers/Gallery.php on line 163
+[17-Oct-2018 08:22:05 UTC] PHP Fatal error:  Cannot redeclare Gallery::do_upload() in /home/y9kf9fxdb1fi/public_html/admin/application/controllers/Gallery.php on line 163
+[13-Dec-2018 12:34:47 UTC] PHP Fatal error:  Cannot declare class Notice_model, because the name is already in use in /home/y9kf9fxdb1fi/public_html/admin/application/models/Academics_model.php on line 324
+[14-Dec-2018 06:30:30 UTC] PHP Fatal error:  Cannot declare class Academics_model, because the name is already in use in /home/y9kf9fxdb1fi/public_html/admin/application/models/Curriculum_models.php on line 341
+[29-Dec-2018 09:31:34 UTC] PHP Fatal error:  Cannot redeclare Gallery_model::clubname() in /home/y9kf9fxdb1fi/public_html/admin/application/models/Gallery_model.php on line 146
+[30-Apr-2022 12:17:14 UTC] PHP Fatal error:  Cannot use [] for reading in /home/y9kf9fxdb1fi/public_html/admin/application/controllers/Home.php on line 24
+[30-Apr-2022 12:20:03 UTC] PHP Fatal error:  Cannot use [] for reading in /home/y9kf9fxdb1fi/public_html/admin/application/controllers/Home.php on line 24
